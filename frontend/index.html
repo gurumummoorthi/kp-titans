@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REUNITE - AI Biometric Missing Persons Platform</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+
+    <!-- Header Navbar -->
+    <nav class="navbar">
+        <div class="brand-title">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <line x1="19" y1="8" x2="19" y2="14"></line>
+                <line x1="22" y1="11" x2="16" y2="11"></line>
+            </svg>
+            <span data-i18n="app_title">REUNITE</span>
+        </div>
+        <div class="nav-menu">
+            <button class="nav-btn active" onclick="switchTab('report')" data-i18n="nav_report_missing">Report Person</button>
+            <button class="nav-btn quick-btn" onclick="openQuickModal()" data-i18n="nav_quick_mode">⚡ Quick Mode</button>
+            <button class="nav-btn" onclick="switchTab('status')" data-i18n="nav_status_check">Check Status</button>
+            <button class="nav-btn" onclick="switchTab('responder')" data-i18n="nav_responder">Responder Portal</button>
+            <button class="nav-btn" onclick="switchTab('admin')" data-i18n="nav_admin">Admin Center</button>
+        </div>
+        <div class="header-right">
+            <select id="langSelect" class="lang-select" onchange="changeLanguage(this.value)">
+                <option value="en">English (EN)</option>
+                <option value="ta">தமிழ் (Tamil)</option>
+                <option value="hi">हिंदी (Hindi)</option>
+            </select>
+        </div>
+    </nav>
+
+    <!-- Network & Sync Status Bar -->
+    <div class="status-bar-container">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <div id="netStatusBadge" class="status-badge online">
+                <span class="dot green"></span> Status: Online
+            </div>
+            <div id="queuedCountBadge" style="font-weight: 600; color: var(--accent-violet);">
+                Queued Offline Reports: 0
+            </div>
+            <button class="btn-secondary" style="padding: 3px 8px; font-size: 11px;" onclick="offlineManager.syncQueuedCases()" data-i18n="btn_retry_sync">
+                🔄 Retry Sync Now
+            </button>
+        </div>
+        <div>FastAPI Gateway Active | AES Field Encryption | Privacy Auto-Delete Policy</div>
+    </div>
+
+    <div class="container">
+
+        <!-- TAB 1: REPORT PERSON -->
+        <div id="tab-report" class="tab-pane active">
+            <div class="hero-card">
+                <h1 data-i18n="hero_heading">Reuniting Loved Ones through AI & Biometric Intelligence</h1>
+                <p data-i18n="hero_sub">Multi-dimensional matching: 128-d Face Embeddings, Haversine Geo-spatial distance, Time interval decay, and Family secret verification.</p>
+            </div>
+
+            <!-- Feature 1: AI Assistance & Guidance Card -->
+            <div class="ai-guidance-card">
+                <div>
+                    <div id="aiGuidanceTitle" class="ai-guidance-title" data-i18n="ai_guidance_title">💡 AI Assistance & Guidance</div>
+                    <div id="aiGuidanceText" class="ai-guidance-text" data-i18n="ai_guidance_text">
+                        Fill in as many details as possible. Adding nicknames, alternate spellings, and family links helps AI match across languages and phonetic variations.
+                    </div>
+                </div>
+                <button class="btn-voice" onclick="speakInstructions()" data-i18n="btn_read_aloud">🔊 Read Guidance Aloud</button>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <span>Register Case Report</span>
+                    <button class="btn-voice" onclick="triggerVoiceInput('clothingDetails', 'voiceStatusReport')">🎤 Voice Dictate Details</button>
+                </div>
+                <div id="voiceStatusReport" style="font-size: 12px; color: var(--accent-violet); margin-bottom: 12px;"></div>
+
+                <form id="reportForm" onsubmit="event.preventDefault(); openReviewModal();">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label data-i18n="lbl_case_type">Case Category</label>
+                            <select id="caseType" required>
+                                <option value="missing">Report Missing Person (Looking for relative)</option>
+                                <option value="found">Report Found Person (Unidentified person found)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label data-i18n="lbl_vulnerability">Vulnerability Priority</label>
+                            <select id="vulnerabilityCategory">
+                                <option value="Standard" data-i18n="opt_standard">Standard Adult</option>
+                                <option value="Child" data-i18n="opt_child">Child (High Priority - Pinned)</option>
+                                <option value="Elderly" data-i18n="opt_elderly">Elderly (Dementia/Memory)</option>
+                                <option value="Injured" data-i18n="opt_injured">Injured / Emergency</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label data-i18n="lbl_full_name">Full Name</label>
+                            <input type="text" id="fullName" placeholder="e.g. Aarav Kumar" required>
+                        </div>
+
+                        <!-- Feature 7: Alias Table Field -->
+                        <div class="form-group">
+                            <label data-i18n="lbl_aliases">Aliases / Nicknames / Native Scripts</label>
+                            <input type="text" id="aliases" placeholder="e.g. Arav, Aarav K., ஆர்வ், आरव (comma separated)">
+                        </div>
+
+                        <div class="form-group">
+                            <label data-i18n="lbl_gender">Gender</label>
+                            <select id="gender">
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label data-i18n="lbl_age">Age (Years)</label>
+                            <input type="number" id="age" value="8" min="0" max="120" required>
+                        </div>
+                        <div class="form-group">
+                            <label data-i18n="lbl_height">Height (cm)</label>
+                            <input type="number" id="heightCm" value="120" placeholder="e.g. 130">
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label data-i18n="lbl_clothing">Clothing & Appearance Details</label>
+                            <textarea id="clothingDetails" rows="3" placeholder="e.g. Blue t-shirt, denim shorts, red shoes, last seen near beach gate." required></textarea>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label data-i18n="lbl_marks">Distinguishing Marks / Tattoo / Scar</label>
+                            <input type="text" id="distinguishingMarks" placeholder="e.g. Scar on left chin, birthmark on forearm">
+                        </div>
+
+                        <!-- Feature 4: Family Information Graph Builder -->
+                        <div class="form-group full-width">
+                            <label data-i18n="lbl_family_graph">Family Relationship Graph (Supporting Evidence)</label>
+                            <div id="familyLinksList" style="margin-bottom: 8px;"></div>
+                            <div style="display: flex; gap: 8px;">
+                                <select id="famRelationSelect" style="max-width: 140px;">
+                                    <option value="Parent">Parent</option>
+                                    <option value="Child">Child</option>
+                                    <option value="Sibling">Sibling</option>
+                                    <option value="Guardian">Guardian</option>
+                                    <option value="Spouse">Spouse</option>
+                                </select>
+                                <input type="text" id="famNameInput" placeholder="Family Member Name" style="flex:1;">
+                                <input type="text" id="famPhoneInput" placeholder="Contact (Optional)" style="flex:1;">
+                                <button type="button" class="btn-secondary" onclick="addFamilyLinkItem()">+ Add Link</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label data-i18n="lbl_location">Last Known Location</label>
+                            <input type="text" id="lastKnownLocation" value="Marina Beach North Pavilion, Chennai" required>
+                        </div>
+                        <div class="form-group">
+                            <label data-i18n="lbl_latitude">Latitude</label>
+                            <input type="number" step="0.0001" id="latitude" value="13.0500" required>
+                        </div>
+                        <div class="form-group">
+                            <label data-i18n="lbl_longitude">Longitude</label>
+                            <input type="number" step="0.0001" id="longitude" value="80.2824" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label data-i18n="lbl_reporter_name">Reporter Name (Field Encrypted)</label>
+                            <input type="text" id="reporterName" value="Priya Kumar" required>
+                        </div>
+                        <div class="form-group">
+                            <label data-i18n="lbl_reporter_phone">Reporter Phone (Field Encrypted)</label>
+                            <input type="text" id="reporterPhone" value="+91 99401 22334" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label data-i18n="lbl_secret_q">Family Secret Question</label>
+                            <input type="text" id="secretQuestion" placeholder="e.g. What is our pet dog's name?">
+                        </div>
+                        <div class="form-group">
+                            <label data-i18n="lbl_secret_a">Secret Answer (Hashed)</label>
+                            <input type="password" id="secretAnswer" placeholder="e.g. Bruno">
+                        </div>
+
+                        <!-- Feature 5: AI Image Upload -->
+                        <div class="form-group full-width">
+                            <label data-i18n="lbl_photo">Person Photo (Optional - Possible Clue, Not Identity Proof)</label>
+                            <input type="file" id="photoFile" accept="image/*">
+                        </div>
+
+                        <div class="form-group full-width" style="display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" id="consentGiven" checked required style="width: auto;">
+                            <label for="consentGiven" data-i18n="lbl_consent">I grant explicit consent to process case data for reunification purposes.</label>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 24px; display: flex; gap: 12px;">
+                        <button type="submit" class="btn-primary" data-i18n="btn_review_modal">
+                            🔍 Review Report Before Submission
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- TAB 2: CASE STATUS & SECRET QUESTION PORTAL -->
+        <div id="tab-status" class="tab-pane">
+            <div class="card">
+                <div class="card-title" data-i18n="status_portal_title">Track Case & Verify Match Status</div>
+                <p style="color: var(--text-muted); margin-bottom: 18px;">Enter your Case ID and Security Token received upon report creation.</p>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Case ID (e.g. MP-CHILD-101)</label>
+                        <input type="text" id="checkCaseId" value="MP-CHILD-101">
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="lbl_token">Security Token</label>
+                        <input type="text" id="checkCaseToken" value="TK-M101-SECURE">
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="lbl_secret_a">Secret Answer (To unlock details)</label>
+                        <input type="password" id="checkSecretAnswer" value="Bruno" placeholder="Enter secret answer">
+                    </div>
+                </div>
+                <div style="margin-top: 16px;">
+                    <button class="btn-primary" onclick="checkStatusAction()" data-i18n="lbl_check_btn">Check Case Status</button>
+                </div>
+
+                <div id="statusResultContainer" style="margin-top: 24px;"></div>
+            </div>
+        </div>
+
+        <!-- TAB 3: HUMAN RESPONDER PORTAL -->
+        <div id="tab-responder" class="tab-pane">
+            <div class="card">
+                <div class="card-title">
+                    <span data-i18n="responder_title">Human Responder Verification Portal</span>
+                    <span class="status-badge online">Responder Auth Mode Active</span>
+                </div>
+                <p data-i18n="responder_desc" style="color: var(--text-muted); margin-bottom: 16px;">
+                    Prioritized review queue (Children & Elderly top-ranked). Review duplicate flags, aliases, family graph, and identity resolution suggestions.
+                </p>
+
+                <!-- Responder View Selector Tabs -->
+                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <button id="btnSubMatchQueue" class="btn-primary" onclick="switchResponderSubTab('queue')">
+                        🎯 Prioritized Match Queue
+                    </button>
+                    <button id="btnSubDupQueue" class="btn-secondary" onclick="switchResponderSubTab('duplicates')">
+                        👯 Flagged Duplicates Queue
+                    </button>
+                </div>
+
+                <div id="responderSubTabQueue">
+                    <div id="responderQueueContainer">
+                        <div style="text-align: center; color: var(--text-muted); padding: 20px;">Loading review queue...</div>
+                    </div>
+                </div>
+
+                <div id="responderSubTabDuplicates" style="display: none;">
+                    <div id="responderDuplicatesContainer">
+                        <div style="text-align: center; color: var(--text-muted); padding: 20px;">Loading duplicate records...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: ADMIN OPERATIONS DASHBOARD -->
+        <div id="tab-admin" class="tab-pane">
+            <div class="card">
+                <div class="card-title" data-i18n="admin_title">Admin Operational Command Center</div>
+                
+                <!-- Live Counters -->
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-val" id="metricTotal">4</div>
+                        <div style="font-size: 13px; color: var(--text-muted);">Total Registered Cases</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-val" id="metricSearching" style="color: var(--accent-amber);">3</div>
+                        <div style="font-size: 13px; color: var(--text-muted);">Active Searching</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-val" id="metricMatches" style="color: var(--accent-violet);">1</div>
+                        <div style="font-size: 13px; color: var(--text-muted);">Possible Matches</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-val" id="metricReunited" style="color: var(--accent-emerald);">0</div>
+                        <div style="font-size: 13px; color: var(--text-muted);">Reunited</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-val" id="metricAccuracy" style="color: #38BDF8;">94.2%</div>
+                        <div style="font-size: 13px; color: var(--text-muted);">Match Accuracy</div>
+                    </div>
+                </div>
+
+                <!-- Geospatial Heatmap Canvas -->
+                <div style="margin-bottom: 24px;">
+                    <h3 style="font-size: 16px; margin-bottom: 12px;">Geospatial Incident & Match Heatmap</h3>
+                    <div class="map-canvas-container">
+                        <canvas id="heatmapCanvas"></canvas>
+                    </div>
+                </div>
+
+                <!-- Shelter Capacity -->
+                <div style="margin-bottom: 24px;">
+                    <h3 style="font-size: 16px; margin-bottom: 12px;">Emergency Shelter Occupancy & Load</h3>
+                    <div id="shelterListGrid" class="form-grid"></div>
+                </div>
+
+                <!-- Audit Logs -->
+                <div>
+                    <h3 style="font-size: 16px; margin-bottom: 12px;">Security Audit Log & Fraud Scoring</h3>
+                    <div id="auditLogTableContainer"></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Review Before Submission Modal -->
+    <div id="reviewModal" class="modal-backdrop">
+        <div class="modal-content">
+            <div class="card-title">
+                <span>🔍 Review Report Before Final Submission</span>
+                <button class="btn-secondary" onclick="closeReviewModal()">✕</button>
+            </div>
+            <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 14px;">
+                Please verify your entered details. User details are preserved exactly as entered without silent modifications.
+            </p>
+            
+            <div id="reviewSummaryContent" style="background: rgba(15,23,42,0.8); padding:16px; border-radius:10px; border:1px solid var(--border-color); margin-bottom:20px; font-size:13px; line-height:1.6;"></div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <button class="btn-voice" onclick="speakReviewSummary()">🔊 Read Summary Aloud</button>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn-secondary" onclick="closeReviewModal()">Edit Details</button>
+                    <button class="btn-primary" onclick="confirmAndSendReport()">✅ Confirm & Submit Report</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Emergency Modal -->
+    <div id="quickModal" class="modal-backdrop">
+        <div class="modal-content">
+            <div class="card-title">
+                <span style="color: var(--accent-rose);">🚨 Quick Emergency Mode (Child / Elderly)</span>
+                <button class="btn-secondary" onclick="closeQuickModal()">✕</button>
+            </div>
+            <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 16px;">
+                2-Click fast reporting for immediate high-priority dispatch.
+            </p>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Target Category</label>
+                    <select id="quickCategory">
+                        <option value="Child">Missing Child (Immediate Alert)</option>
+                        <option value="Elderly">Elderly / Dementia Lost</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Approx. Age</label>
+                    <input type="number" id="quickAge" value="6">
+                </div>
+                <div class="form-group full-width">
+                    <label>Appearance / Clothes & Location</label>
+                    <input type="text" id="quickDetails" value="Child in yellow t-shirt seen near Koyambedu bus stand" required>
+                </div>
+                <div class="form-group full-width">
+                    <label>Your Phone Number</label>
+                    <input type="text" id="quickPhone" value="+91 98765 00000" required>
+                </div>
+            </div>
+            <div style="margin-top: 20px; text-align: right;">
+                <button class="btn-primary" style="background: linear-gradient(135deg, #F43F5E, #E11D48);" onclick="submitQuickEmergency()">
+                    🚨 DISPATCH EMERGENCY REPORT
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toastContainer"></div>
+
+    <!-- Scripts -->
+    <script src="/static/js/i18n.js"></script>
+    <script src="/static/js/voice.js"></script>
+    <script src="/static/js/offline_sync.js"></script>
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
